@@ -4,14 +4,29 @@ const PADDLE_SPEED = 16;
 const PUCK_SPEED = 5;
 const PADDLE_HITS_FOR_NEW_LEVEL = 5;
 const SCORE_BOARD_HEIGHT = 50;
+
+
+var spaceShip, enemy001, enemy002, enemy003, bullet;
+
+// Control constants
 const ARROW_KEY_LEFT = 37;
 const ARROW_KEY_RIGHT = 39;
+const ARROW_KEY_UP = 38;
+const ARROW_KEY_DOWN = 40;
+const LASER_KEY_DOWN = 86; // v
+const BOMB_KEY_DOWN = 66;  // b
 const SPACE_KEY = 32;
 
 var canvas, stage, paddle, puck, board, scoreTxt, livesTxt, messageTxt, messageInterval;
 var leftWall, rightWall, ceiling, floor;
+
 var leftKeyDown = false;
 var rightKeyDown = false;
+var upKeyDown = false;
+var downKeyDown = false;
+var laserKeyDown = false;
+var bombKeyDown = false;
+var shipSpeed = 5;
 
 var bricks = [];
 
@@ -22,6 +37,9 @@ var score = 0;
 var level = 0;
 
 var gameRunning = true;
+
+var queue;
+var startText;
 
 var levels = [
     {color:'#705000', points:1},
@@ -41,37 +59,59 @@ var levels = [
 function init() {
     canvas = document.getElementById('canvas');
     stage = new createjs.Stage(canvas);
+    loadAssets();
     newGame();
-    startGame();
 }
+
 function newGame() {
-    buildWalls();
     stage.update();
     buildMessageBoard();
-    buildPaddle();
-    buildPuck();
     setControls();
     newLevel();
-    newLevel();
+    startGame();
+    stage.removeChild(startText);
 }
-function buildWalls() {
-    var wall = new createjs.Shape();
-    wall.graphics.beginFill('#333');
-    wall.graphics.drawRect(0, 0, WALL_THICKNESS, canvas.height);
-    stage.addChild(wall);
-    wall = new createjs.Shape();
-    wall.graphics.beginFill('#333');
-    wall.graphics.drawRect(0, 0, WALL_THICKNESS, canvas.height);
-    wall.x = canvas.width - WALL_THICKNESS;
-    stage.addChild(wall);
-    wall = new createjs.Shape();
-    wall.graphics.beginFill('#333');
-    wall.graphics.drawRect(0, 0, canvas, WALL_THICKNESS);
-    stage.addChild(wall);
-    leftWall = WALL_THICKNESS;
-    rightWall = canvas.width - WALL_THICKNESS;
-    ceiling = WALL_THICKNESS;
+
+// Asset Load Functions
+function loadAssets(){
+    queue = new createjs.LoadQueue(true);
+    queue.loadManifest("./manifest.json");
+    queue.on("fileload", handleFileLoad);
+    queue.on("complete", loadComplete);
+    queue.load();
+    console.log("Assets Loaded...")
 }
+function handleFileLoad(event) {
+    if(event.item.id == "spaceShip-001"){
+        spaceShip = new createjs.Bitmap(event.result);
+        spaceShip.x = canvas.width / 2 - spaceShip.getBounds().width /  2;
+        spaceShip.y = canvas.height - spaceShip.getBounds().height;
+        console.log("SpaceShip loaded...")
+    }
+    if(event.item.id == "enemy_001"){
+        enemy_001 = new createjs.Bitmap(event.result);
+    }
+    if(event.item.id == "enemy_002"){
+        enemy_002 = new createjs.Bitmap(event.result);
+    }
+    if(event.item.id == "enemy_003"){
+        enemy_003 = new createjs.Bitmap(event.result);
+    }
+    if(event.item.id == "bullet"){
+        bullet = new createjs.Bitmap(event.result);
+    }
+}
+function loadComplete(event){
+    startText = new createjs.Text("Click To Start", "50px Arial", "#FFFFFF");
+    startText.x = canvas.width /2 - startText.getMeasuredWidth()/2;
+    startText.y = canvas.height /2 - startText.getMeasuredHeight()/2;
+    stage.addChild(startText);
+    stage.update();
+    stage.on("stagemousedown",newGame,null,false);
+}
+
+// Game and Scene Functions
+function buildScene(){}
 function buildMessageBoard() {
     board = new createjs.Shape();
     board.graphics.beginFill('#333');
@@ -93,7 +133,231 @@ function buildMessageBoard() {
     messageTxt.x = canvas.width / 2;
     stage.addChild(messageTxt);
 }
-function buildPaddle() {
+function gameOver() {
+    createjs.Ticker.setPaused(true);
+    gameRunning = false;
+    messageTxt.text = "press spacebar to play";
+    puck.visible = false;
+    paddle.visible = false;
+    stage.update();
+    messageInterval = setInterval(function () {
+        messageTxt.visible = messageTxt.visible ? false : true;
+        stage.update();
+    }, 1000);
+}
+function resetGame() {
+    clearInterval(messageInterval);
+    level = 0;
+    score = 0;
+    lives = 5;
+    paddleHits = 0;
+    puck.y = 160;
+    puck.vely = PUCK_SPEED;
+    puck.visible = true;
+    paddle.visible = true;
+    messageTxt.visible = true;
+    gameRunning = true;
+    messageTxt.text = "press spacebar to pause";
+    stage.update();
+    removeBricks();
+    newLevel();
+    newLevel();
+    createjs.Ticker.setPaused(false);
+}
+function startGame() {
+    createjs.Ticker.setFPS(60);
+    createjs.Ticker.addEventListener("tick", function (e) {
+        if (!e.paused) {
+            runGame();
+            stage.update();
+        }
+    });
+}
+function runGame() {
+    update();
+    render();
+    evalGame();
+}
+
+
+function buildShip(){}
+function buildEnemies(){}
+function buildBoss(){}
+
+
+// Bullet Functions
+function buildLaser(){}
+function buildRocket(){}
+function updateLaser(){}
+function updateRocket(){}
+
+
+// Control Ship Functions
+function setControls() {
+    console.log("... moving ...")
+    window.onkeydown = handleKeyDown;
+    window.onkeyup = handleKeyUp;
+}
+function handleKeyDown(e) {
+    e = !e ? window.event : e;
+    switch (e.keyCode) {
+        case ARROW_KEY_LEFT:
+            leftKeyDown = true;
+            break;
+        case ARROW_KEY_RIGHT:
+            rightKeyDown = true;
+            break;
+        case ARROW_KEY_UP:
+            upKeyDown = true;
+            break;
+        case ARROW_KEY_DOWN:
+            downKeyDown = true;
+            break;
+        case LASER_KEY_DOWN:
+            laserKeyDown = true;
+            break;
+        case BOMB_KEY_DOWN:
+            bombKeyDown = true;
+            break;
+    }
+}
+function handleKeyUp(e) {
+    e = !e ? window.event : e;
+    switch (e.keyCode) {
+        case ARROW_KEY_LEFT:
+            leftKeyDown = false;
+            break;
+        case ARROW_KEY_RIGHT:
+            rightKeyDown = false;
+            break;
+        case ARROW_KEY_UP:
+            upKeyDown = false;
+            break;
+        case ARROW_KEY_DOWN:
+            downKeyDown = false;
+            break;
+        case LASER_KEY_DOWN:
+            laserKeyDown = false;
+            break;
+        case BOMB_KEY_DOWN:
+            bombKeyDown = false;
+            break;
+        case SPACE_KEY:
+            if (gameRunning) {
+                createjs.Ticker.setPaused(createjs.Ticker.getPaused() ? false : true);
+            }
+            else {
+                resetGame();
+            }
+            break;
+    }
+}
+
+
+
+
+// Update Functions
+function update() {
+    updateShip();
+    /*updatePuck();
+    checkPaddle();
+    checkBricks();*/
+}
+function updateShip(){
+
+    if(leftKeyDown) {
+        if (spaceShip.x > 0) {
+            spaceShip.x -= shipSpeed
+        }
+    }
+    if(rightKeyDown) {
+        if (spaceShip.x < canvas.width - spaceShip.getBounds().width) {
+            spaceShip.x += shipSpeed
+        }
+    }
+    if(upKeyDown) {
+        if (spaceShip.y > 0) {
+            spaceShip.y -= shipSpeed
+        }
+    }
+    if(downKeyDown) {
+        if (spaceShip.y < canvas.height - spaceShip.getBounds().height) {
+            spaceShip.y += shipSpeed
+        }
+    }
+
+    if(laserKeyDown){
+        console.log("fireLaser");
+        //fireLaser();
+    }
+
+    if(bombKeyDown){
+        console.log("fireBomb");
+        //fireLaser();
+    }
+}
+function updateEnemies(){}
+function updateBoss(){}
+
+function checkShip(){}
+function checkEnemies(){}
+function checkBoss(){}
+
+// Render Functions
+function render() {
+    /*paddle.x = paddle.nextX;
+    puck.x = puck.nextX;
+    puck.y = puck.nextY;
+    livesTxt.text = "lives: " + lives;
+    scoreTxt.text = "score: " + score;*/
+}
+function newLevel() {
+    console.log(spaceShip);
+    stage.addChild(spaceShip);
+}
+function evalPuck() {
+    if (puck.y > paddle.y) {
+        puck.isAlive = false;
+    }
+    if (puck.y > canvas.height + 200) {
+        puck.y = bricks[0].y + bricks[0].height + 40;
+        puck.x = stage.canvas.width / 2;
+        puck.velx *= -1;
+        puck.isAlive = true;
+        combo = 0;
+        lives--;
+    }
+}
+function evalGame() {
+    /*if (lives < 0 || bricks[0].y > board.y) {
+        gameOver();
+    }
+    if (paddleHits === PADDLE_HITS_FOR_NEW_LEVEL) {
+        newLevel();
+    }*/
+}
+
+/*function buildWalls() {
+    var wall = new createjs.Shape();
+    wall.graphics.beginFill('#333');
+    wall.graphics.drawRect(0, 0, WALL_THICKNESS, canvas.height);
+    stage.addChild(wall);
+    wall = new createjs.Shape();
+    wall.graphics.beginFill('#333');
+    wall.graphics.drawRect(0, 0, WALL_THICKNESS, canvas.height);
+    wall.x = canvas.width - WALL_THICKNESS;
+    stage.addChild(wall);
+    wall = new createjs.Shape();
+    wall.graphics.beginFill('#333');
+    wall.graphics.drawRect(0, 0, canvas, WALL_THICKNESS);
+    stage.addChild(wall);
+    leftWall = WALL_THICKNESS;
+    rightWall = canvas.width - WALL_THICKNESS;
+    ceiling = WALL_THICKNESS;
+}
+*/
+
+/*function buildPaddle() {
     paddle = new createjs.Shape();
     paddle.width = PADDLE_WIDTH;
     paddle.height = 20;
@@ -115,82 +379,11 @@ function buildPuck() {
     puck.isAlive = true;
     stage.addChildAt(puck, 0);
 }
-function setControls() {
-    window.onkeydown = handleKeyDown;
-    window.onkeyup = handleKeyUp;
-}
-function handleKeyDown(e) {
-    e = !e ? window.event : e;
-    switch (e.keyCode) {
-        case ARROW_KEY_LEFT:
-            leftKeyDown = true;
-            break;
-        case ARROW_KEY_RIGHT:
-            rightKeyDown = true;
-            break;
-    }
-}
-function handleKeyUp(e) {
-    e = !e ? window.event : e;
-    switch (e.keyCode) {
-        case ARROW_KEY_LEFT:
-            leftKeyDown = false;
-            break;
-        case ARROW_KEY_RIGHT:
-            rightKeyDown = false;
-            break;
-        case SPACE_KEY:
-            if (gameRunning) {
-                createjs.Ticker.setPaused(createjs.Ticker.getPaused() ? false : true);
-            }
-            else {
-                resetGame();
-            }
-            break;
-    }
-}
-function newLevel() {
-    var i, brick, freeLifeTxt;
-    var data = levels[level];
-    var xPos = WALL_THICKNESS;
-    var yPos = WALL_THICKNESS;
-    var freeLife = Math.round(Math.random() * 20);
-    paddleHits = 0;
-    shiftBricksDown();
-    for (i = 0; i < 20; i++) {
-        brick = new createjs.Shape();
-        brick.graphics.beginFill(i == freeLife ? '#009900' : data.color);
-        brick.graphics.drawRect(0, 0, 76, 20);
-        brick.graphics.endFill();
-        brick.x = xPos;
-        brick.y = yPos;
-        brick.width = 76;
-        brick.height = 20;
-        brick.points = data.points;
-        brick.freeLife = false;
-        bricks.push(brick);
-        stage.addChild(brick);
-        if (i == freeLife) {
-            freeLifeTxt = new createjs.Text('1UP', '12px Times', '#fff');
-            freeLifeTxt.x = brick.x + (brick.width / 2);
-            freeLifeTxt.y = brick.y + 4;
-            freeLifeTxt.width = brick.width;
-            freeLifeTxt.textAlign = 'center';
-            brick.freeLife = freeLifeTxt;
-            stage.addChild(freeLifeTxt);
-        }
-        xPos += brick.width;
-        if (xPos > (brick.width * 10)) {
-            xPos = WALL_THICKNESS
-            yPos += brick.height;
-        }
-    }
-    level++;
-    if (level == levels.length) {
-        level--;
-    }
-}
-function shiftBricksDown() {
+*/
+
+
+
+/*function shiftBricksDown() {
     var i, brick;
     var shiftHeight = 80;
     var len = bricks.length;
@@ -201,14 +394,9 @@ function shiftBricksDown() {
             brick.freeLife.y += shiftHeight;
         }
     }
-}
-function update() {
-    updatePaddle();
-    updatePuck();
-    checkPaddle();
-    checkBricks();
-}
-function updatePaddle() {
+}*/
+
+/*function updatePaddle() {
     var nextX = paddle.x;
     if (leftKeyDown) {
         nextX = paddle.x - PADDLE_SPEED;
@@ -242,7 +430,9 @@ function updatePuck() {
     puck.nextX = nextX;
     puck.nextY = nextY;
 }
-function checkPaddle() {
+*/
+
+/*function checkPaddle() {
     if (puck.vely > 0 && puck.isAlive && puck.nextY > (paddle.y - paddle.height) && puck.nextX >= paddle.x && puck.nextX <= (paddle.x + paddle.width)) {
         puck.nextY = paddle.y - puck.height;
         combo = 0;
@@ -292,66 +482,10 @@ function checkBricks() {
         }
     }
 }
-function render() {
-    paddle.x = paddle.nextX;
-    puck.x = puck.nextX;
-    puck.y = puck.nextY;
-    livesTxt.text = "lives: " + lives;
-    scoreTxt.text = "score: " + score;
-}
-function evalPuck() {
-    if (puck.y > paddle.y) {
-        puck.isAlive = false;
-    }
-    if (puck.y > canvas.height + 200) {
-        puck.y = bricks[0].y + bricks[0].height + 40;
-        puck.x = stage.canvas.width / 2;
-        puck.velx *= -1;
-        puck.isAlive = true;
-        combo = 0;
-        lives--;
-    }
-}
-function evalGame() {
-    if (lives < 0 || bricks[0].y > board.y) {
-        gameOver();
-    }
-    if (paddleHits === PADDLE_HITS_FOR_NEW_LEVEL) {
-        newLevel();
-    }
-}
-function gameOver() {
-    createjs.Ticker.setPaused(true);
-    gameRunning = false;
-    messageTxt.text = "press spacebar to play";
-    puck.visible = false;
-    paddle.visible = false;
-    stage.update();
-    messageInterval = setInterval(function () {
-        messageTxt.visible = messageTxt.visible ? false : true;
-        stage.update();
-    }, 1000);
-}
-function resetGame() {
-    clearInterval(messageInterval);
-    level = 0;
-    score = 0;
-    lives = 5;
-    paddleHits = 0;
-    puck.y = 160;
-    puck.vely = PUCK_SPEED;
-    puck.visible = true;
-    paddle.visible = true;
-    messageTxt.visible = true;
-    gameRunning = true;
-    messageTxt.text = "press spacebar to pause";
-    stage.update();
-    removeBricks();
-    newLevel();
-    newLevel();
-    createjs.Ticker.setPaused(false);
-}
-function removeBricks() {
+*/
+
+
+/*function removeBricks() {
     var i, brick;
     for (i = 0; i < bricks.length; i++) {
         brick = bricks[i];
@@ -361,19 +495,5 @@ function removeBricks() {
         stage.removeChild(brick);
     }
     bricks = [];
-}
-function startGame() {
-    createjs.Ticker.setFPS(60);
-    createjs.Ticker.addEventListener("tick", function (e) {
-        if (!e.paused) {
-            runGame();
-            stage.update();
-        }
-    });
-}
-function runGame() {
-    update();
-    render();
-    evalPuck();
-    evalGame();
-}
+}*/
+

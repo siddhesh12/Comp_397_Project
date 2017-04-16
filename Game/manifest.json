@@ -1,0 +1,8 @@
+{
+  "manifest": [
+    {"id":"spaceShip-001", "src":"images/spaceShip-001.png"},
+    {"id":"enemy-001", "src":"images/enemy-001.png"},
+    {"id":"enemy-002", "src":"images/enemy-002.png"},
+    {"id":"enemy-003", "src":"images/enemy-003.png"}
+  ]
+}
