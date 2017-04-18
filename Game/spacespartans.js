@@ -65,6 +65,8 @@ var gameRunning = true;
 // PreLoad variables
 var queue;
 var startText;
+ var backgroundSong;
+  var bulletSong;
 
 
 function init() {
@@ -80,13 +82,41 @@ function newGame() {
     setControls();
     newLevel();
     startGame();
-
+    playBackgroundMusic();
     stage.removeChild(startText);
 }
 
+
+function playBackgroundMusic()
+{
+     backgroundSong = createjs.Sound.play('backgroundMusic');
+}
+function stopBackgroundMusic()
+{
+     backgroundSong.stop();
+     backgroundSong = null;
+}
+function playBulletMusic()
+{
+    bulletSong =  createjs.Sound.play('bulletSound');
+}
+function playDoubleBulletMusic()
+{
+    createjs.Sound.play('doubleBulletSound');
+    createjs.Sound.play('doubleBulletSound');
+}
+
+
+
 // Asset Load Functions
 function loadAssets(){
+    
+    createjs.Sound.initializeDefaultPlugins();
+    
+
     queue = new createjs.LoadQueue(true);
+    createjs.Sound.alternateExtensions = ["mp3"];
+    queue.installPlugin(createjs.Sound);
     queue.loadManifest("./manifest.json");
     queue.on("fileload", handleFileLoad);
     queue.on("complete", loadComplete);
@@ -153,6 +183,7 @@ function buildMessageBoard() {
 }
 function gameOver() {
     createjs.Ticker.setPaused(true);
+    stopBackgroundMusic();
     gameRunning = false;
     messageTxt.text = "press spacebar to play";
     stage.update();
@@ -176,6 +207,7 @@ function resetGame() {
     messageTxt.text = "press spacebar to pause";
     stage.update();
     removeBricks();
+    stopBackgroundMusic();
     newLevel();
     newLevel();
     createjs.Ticker.setPaused(false);
@@ -249,6 +281,14 @@ function handleKeyUp(e) {
         case SPACE_KEY:
             if (gameRunning) {
                 createjs.Ticker.setPaused(createjs.Ticker.getPaused() ? false : true);
+                if(backgroundSong != null)
+                {
+                stopBackgroundMusic();
+                }
+                else
+                {
+                    playBackgroundMusic();
+                }
             }
             else {
                 resetGame();
@@ -278,7 +318,7 @@ function buildLaser(){
     laser = new Laser();
     laser.x = spaceShip.x + spaceShip.getBounds().width / 2;
     laser.y = spaceShip.y;
-
+playBulletMusic();
     spaceShipLasers.addChild(laser);
 }
 function buildRocket(){
@@ -288,7 +328,7 @@ function buildRocket(){
     rocket2.x = spaceShip.x + spaceShip.getBounds().width - 10;
     rocket1.y = spaceShip.y;
     rocket2.y = spaceShip.y;
-
+    playDoubleBulletMusic();
     spaceShipRockets.addChild(rocket1);
     spaceShipRockets.addChild(rocket2);
 }
@@ -469,6 +509,7 @@ Laser.prototype.initialize = function () {
     // console.log("initializing" + spriteSheet);
     this.Sprite_initialize(spriteSheet, "stone_1");
     this.paused = true;
+    playBulletMusic();
 }
 Laser.prototype.move = function (){
     //console.log("moving...");
