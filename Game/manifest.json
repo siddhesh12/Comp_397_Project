@@ -5,6 +5,10 @@
     {"id":"enemy-002", "src":"images/enemy-002.png"},
     {"id":"enemy-003", "src":"images/enemy-003.png"},
     {"id":"laser-001", "src":"images/laser-001.png"},
-    {"id":"back-001", "src":"images/back-001.png"}
+    {"id":"back-001", "src":"images/back-001.png"},
+    {"id":"backgroundMusic", "src":"images/gotBackground.mp3"},
+    {"id":"dreamRaid1", "src":"images/dreamRaid1.mp3"},
+    {"id":"bulletSound", "src":"images/bullet.mp3"},
+    {"id":"doubleBulletSound", "src":"images/doubleBullet.mp3"}
   ]
 }
