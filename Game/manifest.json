@@ -9,6 +9,8 @@
     {"id":"backgroundMusic", "src":"images/gotBackground.mp3"},
     {"id":"dreamRaid1", "src":"images/dreamRaid1.mp3"},
     {"id":"bulletSound", "src":"images/bullet.mp3"},
-    {"id":"doubleBulletSound", "src":"images/doubleBullet.mp3"}
+    {"id":"doubleBulletSound", "src":"images/doubleBullet.mp3"},
+    {"id":"explosion", "src":"images/explosion.mp3"},
+    {"id":"laugh", "src":"images/laugh.mp3"}
   ]
 }

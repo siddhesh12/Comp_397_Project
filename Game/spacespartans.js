@@ -9,7 +9,7 @@ var enemyLasers = [];
 var enemyShips = new createjs.Container();
 
 // Game Variables
-var lives = 5;
+var lives = 2;
 var score = 0;
 var level = 0;
 var shipSpeed = 3;
@@ -51,8 +51,8 @@ var queue;
 var startText;
 var spriteSheet;
 var back_001;
- var backgroundSong;
-  var bulletSong;
+var backgroundSong;
+var bulletSong;
 
 // Color effect
 var filter = new createjs.ColorFilter(1,1,1,1,0,0,0,0);
@@ -83,7 +83,7 @@ function playBackgroundMusic()
 function stopBackgroundMusic()
 {
      backgroundSong.stop();
-     backgroundSong = null;
+     //backgroundSong = null;
 }
 function playBulletMusic()
 {
@@ -92,7 +92,7 @@ function playBulletMusic()
 function playDoubleBulletMusic()
 {
     createjs.Sound.play('doubleBulletSound');
-    createjs.Sound.play('doubleBulletSound');
+    //createjs.Sound.play('doubleBulletSound');
 }
 
 
@@ -182,15 +182,23 @@ function buildMessageBoard() {
 }
 function gameOver() {
     createjs.Ticker.setPaused(true);
-    stopBackgroundMusic();
     gameRunning = false;
-    messageTxt.text = "press spacebar to play";
+    messageTxt.text = "press spacebar to try again";
+    createjs.Sound.play('laugh');
 
     enemyShips.removeAllChildren();
     stage.removeChild(back_001);
     stage.removeChild(spaceShipLasers);
     stage.removeChild(spaceShipRockets);
     stage.removeChild(enemyShips);
+    stage.removeChild(spaceShip);
+    stopBackgroundMusic();
+
+    gameOverTxt = new createjs.Text('Game Over. Mankind was erased...', '50px Times', '#fff');
+    gameOverTxt.textAlign = "center";
+    gameOverTxt.y = stage.canvas.height / 2 - 100;
+    gameOverTxt.x = stage.canvas.width / 2;
+    stage.addChild(gameOverTxt);
 
     stage.update();
     messageInterval = setInterval(function () {
@@ -207,9 +215,7 @@ function resetGame() {
     gameRunning = true;
     messageTxt.text = "press spacebar to pause";
     stage.update();
-    removeBricks();
     stopBackgroundMusic();
-    newLevel();
     newLevel();
     createjs.Ticker.setPaused(false);
 }
@@ -219,12 +225,15 @@ function startGame() {
         if (!e.paused) {
             runGame();
             stage.update();
+
         }
     });
 }
 function runGame() {
-    update();
-    evalGame();
+    if (gameRunning == true) {
+        update();
+        evalGame();
+    }
 }
 
 // Render Functions
@@ -236,6 +245,7 @@ function newLevel() {
 
     buildMessageBoard();
     buildSpaceShip();
+    playBackgroundMusic();
 
 
     setInterval('buildEnemyShipLight()', lightenemyinterval);
@@ -386,12 +396,13 @@ function updateRocket(){
 
 // Update Functions
 function update() {
-    checkShip();
-    updateShip();
-    updateLaser();
-    updateRocket();
-    updateEnemies();
-    updateBoard();
+        checkShip();
+        updateShip();
+        updateLaser();
+        updateRocket();
+        updateEnemies();
+        updateBoard();
+
 }
 function updateShip(){
 
@@ -501,6 +512,7 @@ function updateEnemies(){
                     score += bossenemypoint;
                     break;
             }
+            createjs.Sound.play('explosion');
             enemyShips.removeChildAt(i);
             console.log(score);
         }
