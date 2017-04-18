@@ -48,7 +48,7 @@ var gameRunning = true;
 
 // PreLoad variables
 var queue;
-var startText;
+var startText, instructionText;
 var spriteSheet;
 var back_001;
 var backgroundSong;
@@ -73,6 +73,7 @@ function newGame() {
     startGame();
     playBackgroundMusic();
     stage.removeChild(startText);
+    stage.removeChild(instructionText);
 }
 
 
@@ -101,7 +102,6 @@ function playDoubleBulletMusic()
 function loadAssets(){
 
     createjs.Sound.initializeDefaultPlugins();
-
 
     queue = new createjs.LoadQueue(true);
     createjs.Sound.alternateExtensions = ["mp3"];
@@ -137,7 +137,12 @@ function loadComplete(event){
     startText = new createjs.Text("Click To Start", "50px Arial", "#FFFFFF");
     startText.x = canvas.width /2 - startText.getMeasuredWidth()/2;
     startText.y = canvas.height /2 - startText.getMeasuredHeight()/2;
+
+    instructionText = new createjs.Text("Arrows: Direction\nV: Laser\nB: Rockets", "22px Arial", "#FFFFFF");
+    instructionText.x = canvas.width /2 - instructionText.getMeasuredWidth()/4  ;
+    instructionText.y = startText.y + 70;
     stage.addChild(startText);
+    stage.addChild(instructionText);
     stage.update();
     stage.on("stagemousedown",newGame,null,true);
 }
@@ -156,6 +161,7 @@ function newGame() {
     newLevel();
     startGame();
     stage.removeChild(startText);
+    stage.removeChild(instructionText);
 }
 
 // Game and Scene Functions
@@ -555,7 +561,7 @@ function checkBoss(){}
 // Laser Class
 function Laser() {
     this.initialize();
-    this.speed = -3;
+    this.speed = -5;
     this.nextY = null;
     this.shouldDie = false;
 }
@@ -623,175 +629,6 @@ Enemy.prototype.move = function (){
     this.y += this.speed;
 }
 
-
-
-
-
-
-
-
-
-
-
-/*function buildWalls() {
- var wall = new createjs.Shape();
- wall.graphics.beginFill('#333');
- wall.graphics.drawRect(0, 0, WALL_THICKNESS, canvas.height);
- stage.addChild(wall);
- wall = new createjs.Shape();
- wall.graphics.beginFill('#333');
- wall.graphics.drawRect(0, 0, WALL_THICKNESS, canvas.height);
- wall.x = canvas.width - WALL_THICKNESS;
- stage.addChild(wall);
- wall = new createjs.Shape();
- wall.graphics.beginFill('#333');
- wall.graphics.drawRect(0, 0, canvas, WALL_THICKNESS);
- stage.addChild(wall);
- leftWall = WALL_THICKNESS;
- rightWall = canvas.width - WALL_THICKNESS;
- ceiling = WALL_THICKNESS;
- }
- */
-
-/*function buildPaddle() {
- paddle = new createjs.Shape();
- paddle.width = PADDLE_WIDTH;
- paddle.height = 20;
- paddle.graphics.beginFill('#3e6dc0').drawRect(0, 0, paddle.width, paddle.height);
- paddle.nextX = 0;
- paddle.x = 20;
- paddle.y = canvas.height - paddle.height - SCORE_BOARD_HEIGHT;
- stage.addChild(paddle);
- }
- function buildPuck() {
- puck = new createjs.Shape();
- puck.graphics.beginFill('#FFFFFF').drawRect(0, 0, 10, 10);
- puck.width = 10;
- puck.height = 10;
- puck.x = canvas.width - 100;
- puck.y = 160;
- puck.velx = PUCK_SPEED;
- puck.vely = PUCK_SPEED;
- puck.isAlive = true;
- stage.addChildAt(puck, 0);
- }
- */
-
-
-
-/*function shiftBricksDown() {
- var i, brick;
- var shiftHeight = 80;
- var len = bricks.length;
- for (i = 0; i < len; i++) {
- brick = bricks[i];
- brick.y += shiftHeight;
- if (brick.freeLife) {
- brick.freeLife.y += shiftHeight;
- }
- }
- }*/
-
-/*function updatePaddle() {
- var nextX = paddle.x;
- if (leftKeyDown) {
- nextX = paddle.x - PADDLE_SPEED;
- if (nextX < leftWall) {
- nextX = leftWall;
- }
- }
- else if (rightKeyDown) {
- nextX = paddle.x + PADDLE_SPEED;
- if (nextX > rightWall - paddle.width) {
- nextX = rightWall - paddle.width;
- }
- }
- paddle.nextX = nextX;
- }
- function updatePuck() {
- var nextX = puck.x + puck.velx;
- var nextY = puck.y + puck.vely;
- if (nextX < leftWall) {
- nextX = leftWall;
- puck.velx *= -1;
- }
- else if (nextX > (rightWall - puck.width)) {
- nextX = rightWall - puck.width;
- puck.velx *= -1;
- }
- if (nextY < (ceiling)) {
- nextY = ceiling;
- puck.vely *= -1;
- }
- puck.nextX = nextX;
- puck.nextY = nextY;
- }
- */
-
-/*function checkPaddle() {
- if (puck.vely > 0 && puck.isAlive && puck.nextY > (paddle.y - paddle.height) && puck.nextX >= paddle.x && puck.nextX <= (paddle.x + paddle.width)) {
- puck.nextY = paddle.y - puck.height;
- combo = 0;
- paddleHits++;
- puck.vely *= -1;
- }
- }
- function checkBricks() {
- if (!puck.isAlive) {
- return;
- }
- var i, brick;
- for (i = 0; i < bricks.length; i++) {
- brick = bricks[i];
- if (puck.nextY >= brick.y && puck.nextY <= (brick.y + brick.height) && puck.nextX >= brick.x && puck.nextX <= (brick.x + brick.width)) {
- score += brick.points;
- combo++;
- if (brick.freeLife) {
- lives++;
- createjs.Tween.get(brick.freeLife)
- .to({alpha:0, y:brick.freeLife.y - 100}, 1000)
- .call(function () {
- stage.removeChild(this);
- });
- }
- if (combo > 4) {
- score += (combo * 10);
- var comboTxt = new createjs.Text('COMBO X' + (combo * 10), '14px Times', '#FF0000');
- comboTxt.x = brick.x;
- comboTxt.y = brick.y;
- comboTxt.regX = brick.width / 2;
- comboTxt.regY = brick.height / 2;
- comboTxt.alpha = 0;
- stage.addChild(comboTxt);
- createjs.Tween.get(comboTxt)
- .wait(200)
- .to({alpha:1, scaleX:2, scaleY:2, y:comboTxt.y - 60}, 1000)
- .call(function () {
- stage.removeChild(this);
- });
- }
- stage.removeChild(brick);
- brick = null;
- bricks.splice(i, 1);
- puck.vely *= -1;
- break;
- }
- }
- }
- */
-
-
-/*function removeBricks() {
- var i, brick;
- for (i = 0; i < bricks.length; i++) {
- brick = bricks[i];
- if (brick.freeLife) {
- stage.removeChild(brick.freeLife);
- }
- stage.removeChild(brick);
- }
- bricks = [];
- }*/
 
 function checkCollision(shape1, shape2){
     if(shape1.x >= shape2.x &&
