@@ -1,14 +1,31 @@
-const WALL_THICKNESS = 20;
-const PADDLE_WIDTH = 100;
-const PADDLE_SPEED = 16;
-const PUCK_SPEED = 5;
-const PADDLE_HITS_FOR_NEW_LEVEL = 5;
 const SCORE_BOARD_HEIGHT = 50;
-
 const FPS = 60;
 
+// Main objects
+var spaceShip;
+var spaceShipLasers = new createjs.Container();
+var spaceShipRockets = new createjs.Container();
+var enemyLasers = [];
+var enemyShips = new createjs.Container();
 
-var spaceShip, enemy001, enemy002, enemy003, bullet;
+// Game Variables 
+var lives = 5;
+var score = 0;
+var level = 0;
+var shipSpeed = 3;
+var laserPower = 30;
+var rocketPower = 100;
+
+var lightenemyinterval = 2000;
+var heavyenemyinterval = 13000;
+var lightenemyspeed = 1;
+var heavyenemyspeed = .3;
+var lightenemyhp = 100;
+var heavyenemyhp = 300;
+var bossenemyhp = 1000;
+var lightenemypoint = 10;
+var heavyenemypoint = 30;
+var bossenemypoint = 200;
 
 // Control constants
 const ARROW_KEY_LEFT = 37;
@@ -18,13 +35,6 @@ const ARROW_KEY_DOWN = 40;
 const LASER_KEY_DOWN = 86; // v
 const BOMB_KEY_DOWN = 66;  // b
 const SPACE_KEY = 32;
-
-var LASERPOWER = 30;
-var ROCKETPOWER = 100;
-
-var canvas, stage, paddle, puck, board, scoreTxt, livesTxt, messageTxt, messageInterval;
-
-
 var leftKeyDown = false;
 var rightKeyDown = false;
 var upKeyDown = false;
@@ -32,57 +42,20 @@ var downKeyDown = false;
 var laserKeyDown = false;
 var bombKeyDown = false;
 
-var shipSpeed = 3;
-var lightenemyspeed = 1;
-var heavyenemyspeed = .3;
-var lightenemyhp = 100;
-var heavyenemyhp = 300;
-var bossenemyhp = 1000;
-
-var lightenemyinterval = 2000;
-var heavyenemyinterval = 13000;
-
-
-var spaceShipLasers = new createjs.Container();
-var spaceShipRockets = new createjs.Container();
-var enemyLasers = [];
-
-var enemyShips = new createjs.Container();
-
-var spriteSheet;
-
-var bricks = [];
-
-var paddleHits = 0;
-var combo = 0;
-var lives = 5;
-var score = 0;
-var level = 0;
-var back_001;
+var canvas, stage, board, scoreTxt, livesTxt, messageTxt, messageInterval;
 
 var gameRunning = true;
 
 // PreLoad variables
 var queue;
 var startText;
+var spriteSheet;
+var back_001;
 
+// Color effect
+var filter = new createjs.ColorFilter(1,1,1,1,0,0,0,0);
+var redfilter = new createjs.ColorFilter(1,.3,.3,1,0,0,0,0);
 
-function init() {
-    canvas = document.getElementById('canvas');
-    stage = new createjs.Stage(canvas);
-    loadAssets();
-    loadSpriteSheet();
-    newGame();
-}
-function newGame() {
-    //stage.update();
-    buildMessageBoard();
-    setControls();
-    newLevel();
-    startGame();
-
-    stage.removeChild(startText);
-}
 
 // Asset Load Functions
 function loadAssets(){
@@ -96,9 +69,6 @@ function loadAssets(){
 function handleFileLoad(event) {
     if(event.item.id == "spaceShip-001"){
         spaceShip = new createjs.Bitmap(event.result);
-        spaceShip.x = canvas.width / 2 - spaceShip.getBounds().width /  2;
-        spaceShip.y = canvas.height - spaceShip.getBounds().height;
-        console.log("SpaceShip loaded...")
     }
     if(event.item.id == "enemy-001"){
         enemy_001 = new createjs.Bitmap(event.result);
@@ -126,10 +96,23 @@ function loadComplete(event){
     stage.on("stagemousedown",newGame,null,true);
 }
 
-// Game and Scene Functions
-function buildScene(){
-
+function init() {
+    canvas = document.getElementById('canvas');
+    stage = new createjs.Stage(canvas);
+    loadAssets();
+    loadSpriteSheet();
+    //newGame();
 }
+function newGame() {
+    console.log("Run")
+    stage.update();
+    setControls();
+    newLevel();
+    startGame();
+    stage.removeChild(startText);
+}
+
+// Game and Scene Functions
 function buildMessageBoard() {
     board = new createjs.Shape();
     board.graphics.beginFill('#333');
@@ -138,12 +121,12 @@ function buildMessageBoard() {
     stage.addChild(board);
     livesTxt = new createjs.Text('lives: ' + lives, '20px Times', '#fff');
     livesTxt.y = board.y + 10;
-    livesTxt.x = WALL_THICKNESS;
+    livesTxt.x = 10;
     stage.addChild(livesTxt);
     scoreTxt = new createjs.Text('score: ' + score, '20px Times', '#fff');
     scoreTxt.textAlign = "right";
     scoreTxt.y = board.y + 10;
-    scoreTxt.x = canvas.width - WALL_THICKNESS;
+    scoreTxt.x = canvas.width - 10;
     stage.addChild(scoreTxt);
     messageTxt = new createjs.Text('press spacebar to pause', '18px Times', '#fff');
     messageTxt.textAlign = 'center';
@@ -155,6 +138,13 @@ function gameOver() {
     createjs.Ticker.setPaused(true);
     gameRunning = false;
     messageTxt.text = "press spacebar to play";
+
+    enemyShips.removeAllChildren();
+    stage.removeChild(back_001);
+    stage.removeChild(spaceShipLasers);
+    stage.removeChild(spaceShipRockets);
+    stage.removeChild(enemyShips);
+
     stage.update();
     messageInterval = setInterval(function () {
         messageTxt.visible = messageTxt.visible ? false : true;
@@ -166,17 +156,10 @@ function resetGame() {
     level = 0;
     score = 0;
     lives = 5;
-    paddleHits = 0;
-    puck.y = 160;
-    puck.vely = PUCK_SPEED;
-    puck.visible = true;
-    paddle.visible = true;
     messageTxt.visible = true;
     gameRunning = true;
     messageTxt.text = "press spacebar to pause";
     stage.update();
-    removeBricks();
-    newLevel();
     newLevel();
     createjs.Ticker.setPaused(false);
 }
@@ -194,10 +177,31 @@ function runGame() {
     evalGame();
 }
 
+// Render Functions
+function newLevel() {
+    stage.addChild(back_001);
+    stage.addChild(spaceShipLasers);
+    stage.addChild(spaceShipRockets);
+    stage.addChild(enemyShips);
 
+    buildMessageBoard();
+    buildSpaceShip();
+
+
+    setInterval('buildEnemyShipLight()', lightenemyinterval);
+    setInterval('buildEnemyShipHeavy()', heavyenemyinterval);
+    setInterval('updateBackground()', 50);
+}
+function evalGame() {
+    /*if (lives < 0 || bricks[0].y > board.y) {
+     gameOver();
+     }
+     if (paddleHits === PADDLE_HITS_FOR_NEW_LEVEL) {
+     newLevel();
+     }*/
+}
 // Control Ship Functions
 function setControls() {
-    console.log("... moving ...")
     window.onkeydown = handleKeyDown;
     window.onkeyup = handleKeyUp;
 }
@@ -257,7 +261,15 @@ function handleKeyUp(e) {
     }
 }
 
-
+function resetSpaceShip(){
+    spaceShip.x = canvas.width / 2 - spaceShip.getBounds().width /  2;
+    spaceShip.y = canvas.height - spaceShip.getBounds().height;
+}
+function buildSpaceShip(){
+    resetSpaceShip();
+    stage.addChild(spaceShip);
+    console.log(spaceShip);
+}
 function buildEnemyShipLight(){
     enemyShip = new Enemy("light");
     enemyShip.x = getRandomInt(0, stage.canvas.width - enemyShip.getBounds().width);
@@ -278,7 +290,6 @@ function buildLaser(){
     laser = new Laser();
     laser.x = spaceShip.x + spaceShip.getBounds().width / 2;
     laser.y = spaceShip.y;
-
     spaceShipLasers.addChild(laser);
 }
 function buildRocket(){
@@ -288,7 +299,6 @@ function buildRocket(){
     rocket2.x = spaceShip.x + spaceShip.getBounds().width - 10;
     rocket1.y = spaceShip.y;
     rocket2.y = spaceShip.y;
-
     spaceShipRockets.addChild(rocket1);
     spaceShipRockets.addChild(rocket2);
 }
@@ -316,10 +326,12 @@ function updateRocket(){
 
 // Update Functions
 function update() {
+    checkShip();
     updateShip();
     updateLaser();
     updateRocket();
     updateEnemies();
+    updateBoard();
 }
 function updateShip(){
 
@@ -366,7 +378,17 @@ function updateEnemies(){
                     spaceShipLasers.children[j].y < enemyShips.children[i].y + enemyShips.children[i].getBounds().height){
 
                     spaceShipLasers.removeChildAt(j);
-                    enemyShips.children[i].hp -= LASERPOWER;
+                    enemyShips.children[i].hp -= laserPower;
+
+                    //Apply color effect animation
+                    /*enemyShips.children[i].filters = [filter];
+                    var tween = createjs.Tween.get(enemyShips.children[i])
+                        .to({filters:[redfilter]}, 500, createjs.Ease.getPowInOut(4))
+                        .wait(200)
+                        .to({filters:[filter]}, 500, createjs.Ease.getPowInOut(4));
+
+                    enemyShips.children[i].cache(0,0,enemyShips.children[i].getBounds().width,enemyShips.children[i].getBounds().height);
+                    enemyShips.children[i].updateCache();*/
 
                     // Play hit laser here
                     //console.log("Laser Hit Test Ok");
@@ -375,20 +397,16 @@ function updateEnemies(){
 
             // Process the rocket hits
             for(var j = spaceShipRockets.children.length - 1; j >=0; --j){
-                //console.log(spaceShipLasers.children[lser].y);
-                if(spaceShipRockets.children[j].x >= enemyShips.children[i].x &&
-                    spaceShipRockets.children[j].x + spaceShipRockets.children[j].getBounds().width < enemyShips.children[i].x + enemyShips.children[i].getBounds().width &&
-                    spaceShipRockets.children[j].y < enemyShips.children[i].y + enemyShips.children[i].getBounds().height){
-
+               if(checkCollision(spaceShipRockets.children[j], enemyShips.children[i] )){
                     spaceShipRockets.removeChildAt(j);
-                    enemyShips.children[i].hp -= ROCKETPOWER;
+                    enemyShips.children[i].hp -= rocketPower;
 
                     // Play hit laser here
                     //console.log("Rocket Hit Test Ok");
                 }
             }
 
-            if(enemyShips.children[i].enemytype =="light") {
+            if(enemyShips.children[i].enemytype == "light") {
                 if(enemyShips.children[i].hp < (lightenemyhp * .5)) {
                     enemyShips.children[i].filters = [
                         new createjs.ColorFilter(1,.3,.3,1,0,0,0,0)
@@ -397,7 +415,7 @@ function updateEnemies(){
                     enemyShips.children[i].updateCache();
                 }
             }
-            if(enemyShips.children[i].enemytype =="heavy") {
+            if(enemyShips.children[i].enemytype == "heavy") {
                 if(enemyShips.children[i].hp < (heavyenemyhp * .5)) {
                     enemyShips.children[i].filters = [
                         new createjs.ColorFilter(1,.3,.3,1,0,0,0,0)
@@ -411,9 +429,20 @@ function updateEnemies(){
         else{
             // Play explosion in this position
             // Play explosion sound
-            // console.log(enemyShips.children[i].hp);
-            console.log(enemyShips.children[i].enemytype);
+
+            switch (enemyShips.children[i].enemytype){
+                case "light":
+                    score += lightenemypoint;
+                    break;
+                case "heavy":
+                    score += heavyenemypoint;
+                    break;
+                case "boss":
+                    score += bossenemypoint;
+                    break;
+            }
             enemyShips.removeChildAt(i);
+            console.log(score);
         }
     }
 }
@@ -425,35 +454,29 @@ function updateBackground(){
     }
 }
 
+function updateBoard(){
+    livesTxt.text = "lives: " + lives;
+    scoreTxt.text = "score: " + score;
+}
+
 function checkShip(){
+    for(var i = enemyShips.children.length - 1; i >= 0; --i){
+        if (checkCollision(spaceShip, enemyShips.children[i])){
 
-}
-function checkEnemies(){
+            enemyShips.removeChildAt(i);
+            // explosion
+            lives -= 1;
 
-}
-function checkBoss(){}
-
-// Render Functions
-function newLevel() {
-    stage.addChild(back_001);
-    stage.addChild(spaceShip);
-    stage.addChild(spaceShipLasers);
-    stage.addChild(spaceShipRockets);
-    stage.addChild(enemyShips);
-
-
-    setInterval('buildEnemyShipLight()', lightenemyinterval);
-    setInterval('buildEnemyShipHeavy()', heavyenemyinterval);
-    setInterval('updateBackground()', 50);
-}
-function evalGame() {
-    /*if (lives < 0 || bricks[0].y > board.y) {
-        gameOver();
+            if(lives > 0 ){
+                resetSpaceShip();
+            } else {
+                gameOver();
+            }
+        }
     }
-    if (paddleHits === PADDLE_HITS_FOR_NEW_LEVEL) {
-        newLevel();
-    }*/
 }
+function checkEnemies(){}
+function checkBoss(){}
 
 
 // Laser Class
@@ -696,6 +719,16 @@ Enemy.prototype.move = function (){
  bricks = [];
  }*/
 
+function checkCollision(shape1, shape2){
+    if(shape1.x >= shape2.x &&
+        shape1.x + shape1.getBounds().width < shape2.x + shape2.getBounds().width &&
+        shape1.y < shape2.y + shape2.getBounds().height){
+        return true
+    }
+
+    return false;
+
+}
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
