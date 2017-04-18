@@ -305,7 +305,7 @@ function handleKeyUp(e) {
                 createjs.Ticker.setPaused(createjs.Ticker.getPaused() ? false : true);
                 if(backgroundSong != null)
                 {
-                stopBackgroundMusic();
+                    stopBackgroundMusic();
                 }
                 else
                 {
@@ -386,6 +386,7 @@ function updateRocket(){
 
 // Update Functions
 function update() {
+    checkShip();
     updateShip();
     updateLaser();
     updateRocket();
