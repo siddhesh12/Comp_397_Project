@@ -53,11 +53,13 @@ var lives = 5;
 var score = 0;
 var level = 0;
 var back_001;
+var backgroundSound;
 
 var gameRunning = true;
 
 // PreLoad variables
 var queue;
+var queue1;
 var startText;
 
 
@@ -87,6 +89,7 @@ function loadAssets(){
     queue.load();
     console.log("Assets Loaded...");
 }
+
 function handleFileLoad(event) {
     if(event.item.id == "spaceShip-001"){
         spaceShip = new createjs.Bitmap(event.result);
@@ -109,6 +112,13 @@ function handleFileLoad(event) {
     if(event.item.id == "back-001"){
         back_001 = new createjs.Bitmap(event.result);
         back_001.y = stage.canvas.height - back_001.getBounds().height;
+    }
+    if(event.item.id == "back-001"){
+        back_001 = new createjs.Bitmap(event.result);
+        back_001.y = stage.canvas.height - back_001.getBounds().height;
+    }
+    if(event.item.id == "backgroundMusic"){
+          backgroundSound =   createjs.Sound.play("backgroundMusic");
     }
 }
 function loadComplete(event){
@@ -363,7 +373,7 @@ function updateEnemies(){
     for(var i = enemyShips.children.length - 1; i >= 0; --i){
         if (enemyShips.children[i].y < stage.canvas.width && enemyShips.children[i].shouldDie == false){
             enemyShips.children[i].move();
-            console.log("Enemy numbers: "+ enemyShips.children.length);
+            // console.log("Enemy numbers: "+ enemyShips.children.length);
         }
         else{
             enemyShips.removeChildAt(i);
@@ -373,9 +383,9 @@ function updateEnemies(){
 function updateBoss(){}
 function updateBackground(){
     // console.log(back_001.y);
-    if(back_001.y <=0){
-        back_001.y += .3;
-    }
+    // if(back_001.y <=0){
+    //     back_001.y += .3;
+    // }
 }
 
 function checkShip(){}
