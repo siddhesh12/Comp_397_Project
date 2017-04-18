@@ -422,7 +422,7 @@ function updateEnemies(){
 
                     spaceShipRockets.removeChildAt(j);
                     enemyShips.children[i].hp -= ROCKETPOWER;
-
+                    
                     // Play hit laser here
                     //console.log("Rocket Hit Test Ok");
                 }
@@ -452,6 +452,7 @@ function updateEnemies(){
             // Play explosion in this position
             // Play explosion sound
             // console.log(enemyShips.children[i].hp);
+            console.log("Play Exposion");
             console.log(enemyShips.children[i].enemytype);
             enemyShips.removeChildAt(i);
         }
@@ -487,12 +488,12 @@ function newLevel() {
     setInterval('updateBackground()', 50);
 }
 function evalGame() {
-    /*if (lives < 0 || bricks[0].y > board.y) {
-        gameOver();
-    }
-    if (paddleHits === PADDLE_HITS_FOR_NEW_LEVEL) {
-        newLevel();
-    }*/
+    // if (lives < 0 || bricks[0].y > board.y) {
+    //     gameOver();
+    // }
+    // if (paddleHits === PADDLE_HITS_FOR_NEW_LEVEL) {
+    //     newLevel();
+    // }
 }
 
 
