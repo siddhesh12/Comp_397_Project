@@ -19,6 +19,9 @@ const LASER_KEY_DOWN = 86; // v
 const BOMB_KEY_DOWN = 66;  // b
 const SPACE_KEY = 32;
 
+var LASERPOWER = 30;
+var ROCKETPOWER = 100;
+
 var canvas, stage, paddle, puck, board, scoreTxt, livesTxt, messageTxt, messageInterval;
 
 
@@ -32,6 +35,9 @@ var bombKeyDown = false;
 var shipSpeed = 3;
 var lightenemyspeed = 1;
 var heavyenemyspeed = .3;
+var lightenemyhp = 100;
+var heavyenemyhp = 300;
+var bossenemyhp = 1000;
 
 var lightenemyinterval = 2000;
 var heavyenemyinterval = 13000;
@@ -288,25 +294,18 @@ function buildRocket(){
 }
 function updateLaser(){
     for(var i = spaceShipLasers.children.length - 1; i >= 0; --i){
-        //console.log(i);
-        //console.log(spaceShipLasers.children[i]);
         if (spaceShipLasers.children[i].y > 0 && spaceShipLasers.children[i].shouldDie == false){
             spaceShipLasers.children[i].move();
-            console.log(spaceShipLasers.children.length);
         }
         else{
             spaceShipLasers.removeChildAt(i);
         }
     }
-
 }
 function updateRocket(){
     for(var i = spaceShipRockets.children.length - 1; i >= 0; --i){
-        //console.log(i);
-        //console.log(spaceShipLasers.children[i]);
         if (spaceShipRockets.children[i].y > 0 && spaceShipRockets.children[i].shouldDie == false){
             spaceShipRockets.children[i].move();
-            console.log(spaceShipRockets.children.length);
         }
         else{
             spaceShipRockets.removeChildAt(i);
@@ -321,10 +320,6 @@ function update() {
     updateLaser();
     updateRocket();
     updateEnemies();
-
-    /*updatePuck();
-    checkPaddle();
-    checkBricks();*/
 }
 function updateShip(){
 
@@ -361,11 +356,63 @@ function updateShip(){
 }
 function updateEnemies(){
     for(var i = enemyShips.children.length - 1; i >= 0; --i){
-        if (enemyShips.children[i].y < stage.canvas.width && enemyShips.children[i].shouldDie == false){
+        if (enemyShips.children[i].y < stage.canvas.width && enemyShips.children[i].hp > 0){
             enemyShips.children[i].move();
-            console.log("Enemy numbers: "+ enemyShips.children.length);
+            // Process the laser hits
+            for(var j = spaceShipLasers.children.length - 1; j >=0; --j){
+                //console.log(spaceShipLasers.children[lser].y);
+                if(spaceShipLasers.children[j].x >= enemyShips.children[i].x &&
+                    spaceShipLasers.children[j].x + spaceShipLasers.children[j].getBounds().width < enemyShips.children[i].x + enemyShips.children[i].getBounds().width &&
+                    spaceShipLasers.children[j].y < enemyShips.children[i].y + enemyShips.children[i].getBounds().height){
+
+                    spaceShipLasers.removeChildAt(j);
+                    enemyShips.children[i].hp -= LASERPOWER;
+
+                    // Play hit laser here
+                    //console.log("Laser Hit Test Ok");
+                }
+            }
+
+            // Process the rocket hits
+            for(var j = spaceShipRockets.children.length - 1; j >=0; --j){
+                //console.log(spaceShipLasers.children[lser].y);
+                if(spaceShipRockets.children[j].x >= enemyShips.children[i].x &&
+                    spaceShipRockets.children[j].x + spaceShipRockets.children[j].getBounds().width < enemyShips.children[i].x + enemyShips.children[i].getBounds().width &&
+                    spaceShipRockets.children[j].y < enemyShips.children[i].y + enemyShips.children[i].getBounds().height){
+
+                    spaceShipRockets.removeChildAt(j);
+                    enemyShips.children[i].hp -= ROCKETPOWER;
+
+                    // Play hit laser here
+                    //console.log("Rocket Hit Test Ok");
+                }
+            }
+
+            if(enemyShips.children[i].enemytype =="light") {
+                if(enemyShips.children[i].hp < (lightenemyhp * .5)) {
+                    enemyShips.children[i].filters = [
+                        new createjs.ColorFilter(1,.3,.3,1,0,0,0,0)
+                    ];
+                    enemyShips.children[i].cache(0,0,enemyShips.children[i].getBounds().width,enemyShips.children[i].getBounds().height);
+                    enemyShips.children[i].updateCache();
+                }
+            }
+            if(enemyShips.children[i].enemytype =="heavy") {
+                if(enemyShips.children[i].hp < (heavyenemyhp * .5)) {
+                    enemyShips.children[i].filters = [
+                        new createjs.ColorFilter(1,.3,.3,1,0,0,0,0)
+                    ];
+                    enemyShips.children[i].cache(0,0,enemyShips.children[i].getBounds().width,enemyShips.children[i].getBounds().height);
+                    enemyShips.children[i].updateCache();
+                }
+            }
+
         }
         else{
+            // Play explosion in this position
+            // Play explosion sound
+            // console.log(enemyShips.children[i].hp);
+            console.log(enemyShips.children[i].enemytype);
             enemyShips.removeChildAt(i);
         }
     }
@@ -373,13 +420,17 @@ function updateEnemies(){
 function updateBoss(){}
 function updateBackground(){
     // console.log(back_001.y);
-    if(back_001.y <=0){
+    if(back_001.y <= 0){
         back_001.y += .3;
     }
 }
 
-function checkShip(){}
-function checkEnemies(){}
+function checkShip(){
+
+}
+function checkEnemies(){
+
+}
 function checkBoss(){}
 
 // Render Functions
@@ -444,20 +495,21 @@ Rocket.prototype.move = function (){
 // Enemy 001 Class
 function Enemy(enemytype) {
     this.shouldDie = false;
+    this.enemytype = enemytype;
     switch (enemytype){
         case "light":
             this.sprite = "enemy-001";
             this.speed = lightenemyspeed;
-            this.hp = 100;
+            this.hp = lightenemyhp;
             break;
         case "heavy":
             this.sprite = "enemy-002";
             this.speed = heavyenemyspeed;
-            this.hp = 300;
+            this.hp = heavyenemyhp;
             break;
         case "boss":
             this.sprite = "enemy-003";
-            this.hp = 1000;
+            this.hp = bossenemyhp;
             this.speed = 0;
             break;
     }
