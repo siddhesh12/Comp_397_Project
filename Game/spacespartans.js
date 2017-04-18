@@ -536,6 +536,7 @@ function checkShip(){
         if (checkCollision(spaceShip, enemyShips.children[i])){
 
             enemyShips.removeChildAt(i);
+            createjs.Sound.play('explosion');
             // explosion
             lives -= 1;
 
